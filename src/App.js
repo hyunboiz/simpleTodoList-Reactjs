@@ -1,48 +1,99 @@
-import { useState } from "react";
+import { useReducer, useRef } from "react";
 
+const initState = {
+  tod: '',
+  todoList: []
+}
+
+const SET_TODO = 'set_todo';
+const SET_LIST_TODO = 'set_list_todo';
+const DELETE_TODO = 'delete_todo';
+
+const reducer = (state, action) => {
+  console.log(action)
+
+  let newState;
+  switch (action.type) {
+
+    case SET_TODO:
+      newState =  {
+          ...state,
+          tod: action.payload
+        }
+      break;
+    case SET_LIST_TODO:
+      newState =  {
+        ...state,
+        todoList: [...state.todoList, action.payload]
+      }
+        break;
+      case DELETE_TODO:
+        const newTodoList = [...state.todoList]
+        newTodoList.splice(action.payload, 1);
+          newState =  {
+            ...state,
+            todoList: newTodoList
+          }
+          break;
+    default:
+      throw Error('INVALID ACTION')
+      break;
+  }
+  console.log(newState)
+  return newState;
+}
+
+const setTodo = payload => {
+  return {
+    type: SET_TODO,
+    payload
+  }
+};
+
+const setTodoList = payload => {
+  return {
+    type: SET_LIST_TODO,
+    payload
+  }
+};
+const deleteTodo = payload => {
+  return {
+    type: DELETE_TODO,
+    payload
+  }
+  
+};
 function App() {
-  const [input, setInput] = useState('');
-  const [todoList, setTodoList] = useState(() => {
-    const jsonTodo =  JSON.parse(localStorage.getItem('todoList')) ?? []
-    return jsonTodo;
-  });
+  const inputRef = useRef();
+  const [state, dispatch] = useReducer(reducer, initState);
+  const { tod, todoList } = state;
 
-  const handleSubmit = (todo) => {
-    setTodoList(prevTodo => {
-      const saveTodo = [...prevTodo, todo];
+  const handleSubmit = () => {
+      dispatch(setTodoList(tod));
+      
 
-      const newjsonTodo = JSON.stringify(saveTodo);
-     
-      localStorage.setItem('todoList', newjsonTodo);
-      return saveTodo;
-    })
-    setInput('');
+      // inputRef.current.focus();
   }
 
-  const handleDone = (done) => {
-    setTodoList(() => {
-
-      const newTodo = todoList.filter(item => item !== done);
-      const newjsonTodo = JSON.stringify(newTodo);
-      localStorage.setItem('todoList', newjsonTodo);
-    return newTodo;
-    })
-
-  }
-
-  return (
-    <div style={{ padding: 30}}>
-      <input value={input} onChange={e => setInput(e.target.value)}/>
-      <button onClick={() => handleSubmit(input)}>add</button>
-
+ return(
+  <div>
+    <input  value={tod} onChange={e => dispatch(setTodo(e.target.value))} placeholder="Add some text..." />
+    <button onClick={handleSubmit}>Add</button>
       <ul>
-        {todoList.map((todo, index) => (
-          <li key={index}>{todo} <button onClick={() => handleDone(todo)}>v</button></li>
-        ))}
-       
+        {
+          todoList.map((tod, index) => (
+
+            <li key={index}> {tod} <span onClick={() => dispatch(deleteTodo(index))}>
+              
+                &times;
+              </span> </li>
+
+          ))
+
+        }
       </ul>
-    </div>
-  );
+  </div>
+ )
 }
 
 export default App;
